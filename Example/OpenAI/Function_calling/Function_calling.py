@@ -5,7 +5,7 @@ import Key
 client = OpenAI(api_key=Key.OPEN_AI_KEY)
 
 conversation = [
-    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "system", "content": "You are a hospital receptionist anime girl. Your job is to assist patient in Thai. You work at BUU hospital"},
 ]
 
 function_descriptions = [
@@ -53,4 +53,5 @@ while True:
     conversation.append({"role": "assistant", "content": ai_response})
     
     # Print the AI's response
-    print(f'AI: {completion.choices[0].message}')
+    print(f'AI: {completion.choices[0].message.content}')
+    print(f' Function to be call:{completion.choices[0].message.function_call}')
