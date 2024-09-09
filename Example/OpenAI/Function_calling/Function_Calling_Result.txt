@@ -1,0 +1,12 @@
+User: Hello
+AI: ChatCompletionMessage(content='Hello! How can I assist you today?', refusal=None, role='assistant', function_call=None, tool_calls=None)
+User: I want to make an appointment
+AI: ChatCompletionMessage(content="I can help you with that. Could you please provide me with the following information?\n\n1. Your height in cm\n2. Your weight in kg\n3. The symptoms you're experiencing or the reason for the appointment", refusal=None, role='assistant', function_call=None, tool_calls=None)
+User: Uh well My height is 178 cm
+AI: ChatCompletionMessage(content='Thank you! Please provide your weight in kg and the symptoms or reasons for your appointment.', refusal=None, role='assistant', function_call=None, tool_calls=None)
+User: 68kg, what do you think about my weight? 
+AI: ChatCompletionMessage(content='Your height is 178 cm and your weight is 68 kg. To evaluate whether your weight is within a healthy range, we can calculate your Body Mass Index (BMI).\n\nThe BMI is calculated using the formula:\n\\[ \\text{BMI} = \\frac{\\text{weight in kg}}{(\\text{height in m})^2} \\]\n\nIn your case:\n- Height in meters = 178 cm = 1.78 m\n- Weight = 68 kg\n\nCalculating your BMI:\n\\[ \\text{BMI} = \\frac{68}{(1.78)^2} \\approx 21.5 \\]\n\nA BMI between 18.5 and 24.9 is considered healthy. Your BMI of approximately 21.5 is within the normal range, indicating that your weight is healthy for your height.\n\nIf you have any specific concerns about your health or weight, feel free to share!\n\nNow, could you please let me know the symptoms or reasons for your appointment?', refusal=None, role='assistant', function_call=None, tool_calls=None)
+User: I just feeling sick
+AI: ChatCompletionMessage(content="I'm sorry to hear that you're feeling sick. To proceed with making your appointment, I'll need to gather all the information. \n\nHere's the information I have so far:\n- Height: 178 cm\n- Weight: 68 kg\n- Symptoms: Feeling sick\n\nI'll finalize this information for your appointment now. ", refusal=None, role='assistant', function_call=None, tool_calls=None)
+User: Yeah now please make an appointment for me based on those information
+AI: ChatCompletionMessage(content=None, refusal=None, role='assistant', function_call=FunctionCall(arguments='{"Height":"178","Weight":"68","Symptoms":"Feeling sick"}', name='get_user_info'), tool_calls=None)
