@@ -1,6 +1,10 @@
 from openai import OpenAI
 import json
 import Key
+import csv
+
+csvDB = "CSV_Test/sample_data.csv"
+rows = []
 
 client = OpenAI(api_key=Key.OPEN_AI_KEY)
 
@@ -15,28 +19,69 @@ function_descriptions = [
         "parameters": {
             "type": "object",
             "properties": {
-                "Height": {
+                "height": {
                     "type": "string",
-                    "description": "Height in cm",
+                    "description": "height in cm",
                 },
-                "Weight": {
+                "weight": {
                     "type": "string",
-                    "description": "Weight in kg",
+                    "description": "weight in kg",
                 },
-                "Symptoms": {
+                "symptoms": {
                     "type": "string",
-                    "description": "Symptoms of what user feel",
+                    "description": "symptoms of what user feel",
                 },
             },
-            "required": ["Height", "Weight","Symptoms"],
+            "required": ["height", "weight","symptoms"],
         },
     }
 ]
 
-def make_an_appointment(Height,Weight,Symtomps):
-    print(f'parameter{Height,Weight,Symtomps}')
-    
+def make_an_appointment(height,weight,Symtomps):
+    print(f'parameter{height,weight,Symtomps}')
+    ID_Card_Info = read_ID_card().split(",")
+    print(f'ID_Card:{ID_Card_Info}')
+    if(appointment_avaliable()):
+        #make appointment
+        content = ID_Card_Info
+        content.append(str(height))
+        content.append(str(weight))
+        content.append(str(Symtomps))
+        print(f'Data to write:{content}')
+        write_csv(content)
+        print("Successfully Add data to Appointment")
+    else:
+        print("Queue Full")
 
+def read_ID_card():
+    with open('data/Example_data/Exampe_ID_card_info.txt', 'r', encoding="utf8") as file:
+        content = file.read()
+        return content
+    
+def appointment_avaliable():
+    with open(csvDB, 'r', encoding="utf8") as csvfile:
+        # creating a csv reader object
+        csvreader = csv.reader(csvfile)
+
+        # extracting field names through first row
+        fields = next(csvreader)
+
+        # extracting each data row one by one
+        for row in csvreader:
+            rows.append(row)
+        # print(csvreader.line_num)
+        if(csvreader.line_num >= 20):
+            return False
+        else:
+            return True
+
+def write_csv(content):
+    with open(csvDB, 'a', encoding="utf8", newline='') as csvfile:
+        # creating a csv writer object
+        csvwriter = csv.writer(csvfile)
+        # writing the data as a new row (content is wrapped in another list)
+        csvwriter.writerow(content)
+    
 while True:
     # Get user input
     user_input = input("User: ")
@@ -58,12 +103,12 @@ while True:
     
     # Print the AI's response
     print(f'AI: {ai_response.choices[0].message.content}')
-    print(f'Function{ai_response.choices[0].message.function_call}')
-    
+    # print(f'Function{ai_response.choices[0].message.function_call}')
+
     if(ai_response.choices[0].message.function_call != None):
         if(ai_response.choices[0].message.function_call.name == "make_an_appointment"):
             parameter = json.loads(ai_response.choices[0].message.function_call.arguments)
-            height = int(parameter["Height"])
-            weight = float(parameter["Weight"])
-            symptoms = parameter["Symptoms"]
+            height = int(parameter["height"])
+            weight = float(parameter["weight"])
+            symptoms = parameter["symptoms"]
             make_an_appointment(height,weight,symptoms)
