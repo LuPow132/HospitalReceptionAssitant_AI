@@ -34,7 +34,8 @@ function_descriptions = [
 ]
 
 def make_an_appointment(Height,Weight,Symtomps):
-    pass
+    print(f'parameter{Height,Weight,Symtomps}')
+    
 
 while True:
     # Get user input
@@ -58,10 +59,11 @@ while True:
     # Print the AI's response
     print(f'AI: {ai_response.choices[0].message.content}')
     print(f'Function{ai_response.choices[0].message.function_call}')
-    if(ai_response.choices[0].message.function_call.name == "make_an_appointment"):
-        parameter = json.loads(ai_response.choices[0].message.function_call.arguments)
-        height = int(parameter["Height"])
-        weight = float(parameter["Weight"])
-        symptoms = parameter["Symptoms"]
-        print(f'parameter{height,weight,symptoms}')
-        make_an_appointment()
+    
+    if(ai_response.choices[0].message.function_call != None):
+        if(ai_response.choices[0].message.function_call.name == "make_an_appointment"):
+            parameter = json.loads(ai_response.choices[0].message.function_call.arguments)
+            height = int(parameter["Height"])
+            weight = float(parameter["Weight"])
+            symptoms = parameter["Symptoms"]
+            make_an_appointment(height,weight,symptoms)
