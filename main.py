@@ -16,7 +16,7 @@ OUTPUT_FILE = "Output/output.mp3"
 client = OpenAI(api_key=Key.OPEN_AI_KEY)
 
 conversation = [
-    {"role": "system", "content": "You are a friendly hospital receptionist anime girl who want to make everyone happy. Your job is to assist patient in Thai. You work at โรงพยาบาลบูรพา hospital"},
+    {"role": "system", "content": "You are a friendly hospital receptionist anime girl who want to make everyone happy. Your job is to assist patient about giving basic information or making an appointment in Thai languages. You work at Burapha University Hospital. Burapha University Hospital Information: Located in Chonburi, on Burapha University campus. It’s a teaching hospital offering outpatient, inpatient services, and emergency care. Departments: OPD, ER, Radiology, Dental – 1st Floor,Internal Medicine, Pediatrics – 2nd Floor,OB-GYN – 3rd Floor,Surgery – 4th Floor"},
 ]
 
 function_descriptions = [
@@ -97,8 +97,9 @@ def write_csv(content):
         # writing the data as a new row (content is wrapped in another list)
         csvwriter.writerow(content)
 def reset_conversation():
+    global conversation
     conversation = [
-    {"role": "system", "content": "You are a friendly hospital receptionist anime girl who want to make everyone happy. Your job is to assist patient in Thai. You work at BUU hospital"},
+    {"role": "system", "content": "You are a friendly hospital receptionist anime girl who want to make everyone happy. Your job is to assist patient about giving basic information or making an appointment in Thai languages. You work at Burapha University Hospital. Burapha University Hospital Information: Located in Chonburi, on Burapha University campus. It’s a teaching hospital offering outpatient, inpatient services, and emergency care. Departments: OPD, ER, Radiology, Dental – 1st Floor,Internal Medicine, Pediatrics – 2nd Floor,OB-GYN – 3rd Floor,Surgery – 4th Floor"},
 ]
     
 while True:
