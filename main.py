@@ -8,6 +8,7 @@ import csv
 import asyncio
 import edge_tts
 import os
+import threading
 import speech_recognition as sr
 from openai import OpenAI
 from playsound import playsound
@@ -73,6 +74,20 @@ async def send_request_with_retry(vts, request, max_retries=3):
             break
     return
 
+async def setup_vts(vts):
+    try:
+        await connect_and_authenticate(vts)
+
+        plugin_parameter_face_lean_rot = "PI_FACE_lean_rot"
+        plugin_parameter_face_lean_X = "PI_FACE_lean_X"
+        await send_request_with_retry(vts, vts.vts_request.requestCustomParameter(plugin_parameter_face_lean_rot, max=30, min=30, default_value=0))
+        await send_request_with_retry(vts, vts.vts_request.requestCustomParameter(plugin_parameter_face_lean_X, max=30, min=30, default_value=0))
+
+    finally:
+        await vts.close()
+
+    return vts
+
 async def generate_audio(TEXT):
     print("Generate TTS")
     communicate = edge_tts.Communicate(TEXT, VOICE,pitch='+35Hz')
@@ -132,54 +147,104 @@ def reset_conversation():
 ]
 
 def chatBot(recognizer):
-    with sr.Microphone() as source:
-        print("Say something in Thai:")
-        audio = recognizer.listen(source)  # Listen for speech
-        
+    while True:
+        with sr.Microphone() as source:
+            print("Listening...")
+            audio = recognizer.listen(source)  # Listen for speech
+
+        try:
+            # Use Google Web Speech API to recognize Thai speech (supports Thai)
+            print("Recognizing speech...")
+            text = recognizer.recognize_google(audio, language="th-TH")  # Thai language code
+            print(f"You said: {text}")
+            user_input = text
+            # Append user message to conversation
+            conversation.append({"role": "user", "content": user_input})
+
+            # Get the AI's response
+            completion = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=conversation,
+                functions=function_descriptions,
+                function_call="auto",  # specify the function call
+            )
+
+            # Append AI's response to conversation
+            ai_response = completion
+            conversation.append({"role": "assistant", "content": ai_response.choices[0].message.content})
+
+            # Print the AI's response
+            print(f'AI: {ai_response.choices[0].message.content}')
+
+            if ai_response.choices[0].message.function_call is not None:
+                if ai_response.choices[0].message.function_call.name == "make_an_appointment":
+                    parameter = json.loads(ai_response.choices[0].message.function_call.arguments)
+                    height = int(parameter["height"])
+                    weight = float(parameter["weight"])
+                    symptoms = parameter["symptoms"]
+                    make_an_appointment(height, weight, symptoms)
+                    reset_conversation()
+            else:
+                asyncio.run(generate_audio(ai_response.choices[0].message.content))
+
+        except sr.UnknownValueError:
+            text = "ขอโทษนะคะ ฉันได้ยินไม่ชัดคะ รบกวนพูดอีกครั้งได้ไหมคะ"
+            print(text)
+            asyncio.run(generate_audio(text))
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition service; {e}")
+
+async def vts_move(vts):
+    while True:
+        try:
+            await connect_and_authenticate(vts)
+            time.sleep(round(random.uniform(1, 5), 1))
+            lean_rot = random.randint(-10, 10)
+            lean_X = random.randint(-20, 20)
+            plugin_parameter_face_lean_rot = "PI_FACE_lean_rot"
+            plugin_parameter_face_lean_X = "PI_FACE_lean_X"
+            await send_request_with_retry(vts, vts.vts_request.requestSetParameterValue(plugin_parameter_face_lean_rot, lean_rot))
+            await send_request_with_retry(vts, vts.vts_request.requestSetParameterValue(plugin_parameter_face_lean_X, lean_X))
+
+            print(f'Ping with data {lean_rot}, {lean_X} at {time.time()}')
+        except websockets.exceptions.ConnectionClosedError as e:
+            print(f"WebSocket connection closed with error: {e}. Reconnecting...")
+            await asyncio.sleep(5)  # Wait before attempting to reconnect
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            break
+
+async def setup_vts():
+    global vts
+    vts = pyvts.vts(plugin_info=plugin_info)
     try:
-        # Use Google Web Speech API to recognize Thai speech (supports Thai)
-        print("Recognizing speech...")
-        text = recognizer.recognize_google(audio, language="th-TH")  # Thai language code
-        print(f"You said: {text}")
-        user_input = text
-        # Append user message to conversation
-        conversation.append({"role": "user", "content": user_input})
-        
-        # Get the AI's response
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=conversation,
-            functions=function_descriptions,
-            function_call="auto",  # specify the function call
-        )
-        
-        # Append AI's response to conversation
-        ai_response = completion
-        conversation.append({"role": "assistant", "content": ai_response.choices[0].message.content})
-        
-        # Print the AI's response
-        print(f'AI: {ai_response.choices[0].message.content}')
-        # print(f'Function{ai_response.choices[0].message.function_call}')
-        if(ai_response.choices[0].message.function_call != None):
-            if(ai_response.choices[0].message.function_call.name == "make_an_appointment"):
-                parameter = json.loads(ai_response.choices[0].message.function_call.arguments)
-                height = int(parameter["height"])
-                weight = float(parameter["weight"])
-                symptoms = parameter["symptoms"]
-                make_an_appointment(height,weight,symptoms)
-                reset_conversation()
-        else:
-            asyncio.run(generate_audio(ai_response.choices[0].message.content))
-            
-    except sr.UnknownValueError:
-        print("Sorry, I could not understand the audio.")
-    except sr.RequestError as e:
-        print(f"Could not request results from Google Speech Recognition service; {e}")
+        await connect_and_authenticate(vts)
+
+        plugin_parameter_face_lean_rot = "PI_FACE_lean_rot"
+        plugin_parameter_face_lean_X = "PI_FACE_lean_X"
+        await send_request_with_retry(vts, vts.vts_request.requestCustomParameter(plugin_parameter_face_lean_rot, max=30, min=30, default_value=0))
+        await send_request_with_retry(vts, vts.vts_request.requestCustomParameter(plugin_parameter_face_lean_X, max=30, min=30, default_value=0))
+
+    finally:
+        await vts.close()
 
 recognizer = sr.Recognizer()
 
+asyncio.run(setup_vts())
+
 with sr.Microphone() as source:
-        print("Adjusting for ambient noise... Please wait.")
-        recognizer.adjust_for_ambient_noise(source)  # Adjust based on the surrounding noise level
-while True:
-    chatBot(recognizer)
+    print("Adjusting for ambient noise... Please wait.")
+    recognizer.adjust_for_ambient_noise(source)  # Adjust based on the surrounding noise level
+
+
+# Create the threads without calling the functions
+x = threading.Thread(target=chatBot, args=(recognizer,))
+y = threading.Thread(target=lambda: asyncio.run(vts_move(vts)))
+
+# Start the threads
+x.start()
+y.start()
+
+# Wait for both threads to complete
+x.join()
+y.join()
