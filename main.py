@@ -23,7 +23,7 @@ csvDB = "Output/appointment.csv"
 rows = []
 
 VOICE = "th-TH-PremwadeeNeural"
-OUTPUT_FILE = "Output/output.mp3"
+OUTPUT_FILE = "Output/output.mp4"
 
 client = OpenAI(api_key=Key.OPEN_AI_KEY)
 
@@ -55,6 +55,11 @@ function_descriptions = [
         },
     }
 ]
+
+def write_subtitle(filename, content):
+    with open(filename, 'w',encoding="utf-8") as file:
+        file.write(content)
+
 
 async def connect_and_authenticate(vts):
     await vts.connect()
@@ -110,8 +115,10 @@ def make_an_appointment(height,weight,Symtomps):
         print(f'Data to write:{content}')
         write_csv(content)
         text = f"ทำการลงทะเบียนนัดลงระบบเรียบร้อยคะ\n ลำดับคิวของท่านคือ {queue_number} คะ\n ขอบคุณที่ใช้บริการคะ"
+        write_subtitle("subtitle.txt",text)
     else:
         text = "ขออภัยคะ ตอนนี้คิวเต็มแล้วคะ ลองติดต่อฝ่ายเวชระเบียนดูนะคะ"
+        write_subtitle("subtitle.txt",text)
     print(text)
     asyncio.run(generate_audio(text))
 
@@ -148,7 +155,7 @@ def reset_conversation():
 
 def chatBot(recognizer):
     while True:
-        with sr.Microphone() as source:
+        with sr.Microphone(device_index=1) as source:
             print("Listening...")
             audio = recognizer.listen(source)  # Listen for speech
 
@@ -185,6 +192,7 @@ def chatBot(recognizer):
                     make_an_appointment(height, weight, symptoms)
                     reset_conversation()
             else:
+                write_subtitle("subtitle.txt",ai_response.choices[0].message.content)
                 asyncio.run(generate_audio(ai_response.choices[0].message.content))
 
         except sr.UnknownValueError:
@@ -232,7 +240,7 @@ recognizer = sr.Recognizer()
 
 asyncio.run(setup_vts())
 
-with sr.Microphone() as source:
+with sr.Microphone(device_index=1) as source:
     print("Adjusting for ambient noise... Please wait.")
     recognizer.adjust_for_ambient_noise(source)  # Adjust based on the surrounding noise level
 
